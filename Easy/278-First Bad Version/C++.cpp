@@ -1,5 +1,3 @@
-
-
 class Solution {
     public:
         bool isBadVersion(int version); // already define(bad = return false)
