@@ -1,7 +1,10 @@
 #include <stdlib.h>
 
 int* maxSlidingWindow(int* nums, int numsSize, int k, int* returnSize) {
-    if (k > numsSize || k <= 0) return NULL;
+    if (k > numsSize || k <= 0) {
+        *returnSize = 0;
+        return NULL;
+    }
 
     *returnSize = (numsSize - k + 1);
     int* result = malloc(*returnSize * sizeof(int));
