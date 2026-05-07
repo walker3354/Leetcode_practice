@@ -42,8 +42,9 @@
   - `Hard`: 1
 - 目前 git 狀態：
   - branch: `master...origin/master`
-  - 有一個既有未提交變更：`Medium/8-String to Integer (atoi)/C.c`
-  - 該變更目前看起來只是條件判斷行尾多了一個空白。
+  - 2026-05-07 檢查時工作區乾淨，`master` 與 `origin/master` 同步。
+  - 最新提交：`b8ccc79 add codex to trace`。
+  - 本機 `rg` 目前執行會被權限擋住，掃 repo 可先用 PowerShell `Get-ChildItem`。
 
 ## 已觀察到的題型基礎
 
@@ -379,4 +380,10 @@ Linux kernel 加分任務：
 - 使用繁體中文回覆，語氣稍微口語一點。
 - 不要一開始就大改既有解答；先確認使用者當下要的是補題、重構、註解整理，還是面試規劃。
 - 如果要整理舊題，優先從位元操作、指標/記憶體、linked list、circular buffer、LRU 開始。
-- `Medium/8-String to Integer (atoi)/C.c` 目前有使用者既有未提交變更，除非任務需要，先不要碰。
+- 2026-05-07 接手觀察：
+  - `Common/Circular_Buffer.c` 很適合當下一個整理點，但目前 `rb_create()` 沒有配置 `data_head`，後續若整理要先修初始化、capacity 檢查與 NULL handling。
+  - `Common/LRU_Cache.c` 目前像草稿，`range = 10001;` 少型別，若要整理 LRU，建議先改成可編譯版本再補面試註解。
+  - 多數題目檔案尚未補上 `Core idea / Time / Space / C notes / Interview notes` 題頭，可以從韌體高相關題開始逐步補。
+- 下一個建議任務：
+  - 先複習 circular buffer 的 full/empty 判斷、read/write index wrap-around、ownership、overflow、防呆，再整理 `Common/Circular_Buffer.c`。
+  - 接著補 LeetCode `622 Design Circular Queue` 的 C 版本，因為它和韌體 ring buffer 最直接相關，也能接到 `641 Design Circular Deque`。
