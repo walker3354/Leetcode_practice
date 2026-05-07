@@ -21,7 +21,7 @@ int myAtoi(char* s) { // skip space + -, others break
 
     while (c_pos < s_len && s[c_pos] >= '0' && s[c_pos] <= '9') {
         int num = s[c_pos++] - '0';
-        if (result > INT_MAX / 10 || (result == INT_MAX / 10 && num > 7)) {
+        if (result > INT_MAX / 10 || (result == INT_MAX / 10 && num > 7)) { 
             return sign == true ? INT_MAX : INT_MIN;
         }
         result = result * 10 + num;
