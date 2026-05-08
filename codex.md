@@ -364,6 +364,37 @@ Linux kernel 加分任務：
   - sliding window
 - 面試時能把 LeetCode 練習連回履歷中的嵌入式背景，而不是只說「我有刷題」。
 
+## 學習紀錄
+
+### 2026-05-08 21:13 +08:00
+
+今晚主軸是把 `Common/Circular_Buffer.c` 從草稿整理成可面試討論的 ring buffer 範例。
+
+完成項目：
+
+- 補完 `rb_write()` 和 `rb_read()` 的基本邏輯。
+- `rb_create()` 加上 `capacity <= 0` 防呆。
+- `rb_write()` / `rb_read()` / `rb_free()` 加上 `rb == NULL` 防呆。
+- `rb_read()` 改成拒絕 `len <= 0`。
+- `rb_write()` 改成先算 `available = capacity - data_counter`，避免用 `data_counter + len` 造成理論上的整數溢位。
+- 檔案頂部補上 ring buffer 的核心概念、複雜度與 C 注意事項。
+- 使用 MSVC 檢查通過：
+  - `cl /nologo /TC /W4 /Zs "Common\Circular_Buffer.c"`
+
+今晚複習的 C / 韌體觀念：
+
+- `volatile`：避免編譯器把可能被硬體、ISR 或其他流程改動的值錯誤快取；但 `volatile` 不等於 thread-safe。
+- ISR：ISR 裡通常不拿 mutex，也不做會阻塞的事；常見做法是清 interrupt flag、讀少量資料，然後用 semaphore 或 queue 通知 task。
+- Macro 副作用：
+  - `#define MIN(a, b) ((a) < (b) ? (a) : (b))`
+  - `MIN(*p++, b)` 會讓 `*p++` 在條件式執行一次，若條件成立，回傳分支又再執行一次。
+  - 重點：運算優先序不等於求值次序；有副作用的 expression 不應傳進 macro。
+
+下一步建議：
+
+- 若要延續今晚內容，下一題適合補 `622 Design Circular Queue` 的 C 版本。
+- 如果只想複習觀念，下一個主題可以看 `static`、`const`、函式指標或 `memcpy` / `memmove` 差異。
+
 ## 參考來源
 
 - LeetCode Top Interview 150: https://leetcode.com/studyplan/top-interview-150/
@@ -381,9 +412,9 @@ Linux kernel 加分任務：
 - 不要一開始就大改既有解答；先確認使用者當下要的是補題、重構、註解整理，還是面試規劃。
 - 如果要整理舊題，優先從位元操作、指標/記憶體、linked list、circular buffer、LRU 開始。
 - 2026-05-07 接手觀察：
-  - `Common/Circular_Buffer.c` 很適合當下一個整理點，但目前 `rb_create()` 沒有配置 `data_head`，後續若整理要先修初始化、capacity 檢查與 NULL handling。
+  - `Common/Circular_Buffer.c` 已在 2026-05-08 整理過，包含 capacity 檢查、NULL handling、read/write wrap-around 與 MSVC `/W4 /Zs` 檢查。
   - `Common/LRU_Cache.c` 目前像草稿，`range = 10001;` 少型別，若要整理 LRU，建議先改成可編譯版本再補面試註解。
   - 多數題目檔案尚未補上 `Core idea / Time / Space / C notes / Interview notes` 題頭，可以從韌體高相關題開始逐步補。
 - 下一個建議任務：
-  - 先複習 circular buffer 的 full/empty 判斷、read/write index wrap-around、ownership、overflow、防呆，再整理 `Common/Circular_Buffer.c`。
   - 接著補 LeetCode `622 Design Circular Queue` 的 C 版本，因為它和韌體 ring buffer 最直接相關，也能接到 `641 Design Circular Deque`。
+  - 或整理 `Common/LRU_Cache.c`，把草稿修到可編譯，再補面試註解。
