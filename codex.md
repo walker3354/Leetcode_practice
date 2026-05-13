@@ -183,6 +183,260 @@ DP 和比較競賽感的難題不是完全不碰，但 4 週衝刺時不要讓�
 
 4 週衝刺期間，Linux kernel 建議當作加分線：每週 1 到 2 小時就好。先做出一個簡單 character device driver，比硬讀核心架構更有面試價值。
 
+## 額外支線：linux-kernel-driver-demo
+
+這是一條獨立於 LeetCode 的實作支線，目標是做出一個小而完整、能放上 GitHub 與履歷的 Linux kernel / BSP 學習專案。
+
+Project name:
+
+- `linux-kernel-driver-demo`
+
+Target platform:
+
+- Raspberry Pi running Linux.
+
+主要目標：
+
+- 建立一個實用的 Linux kernel driver demo。
+- 可用於 Junior BSP、BMC、Embedded Linux、Platform Firmware 相關職缺作品集。
+- 重點是可編譯、可測試、可解釋，不追求複雜功能。
+
+明確不要一開始就做：
+
+- Yocto image building
+- U-Boot porting
+- PCIe
+- camera / display
+- 進階 kernel internals
+
+這條支線要學到：
+
+1. Linux kernel module basics
+2. character device driver
+3. user-space to kernel-space communication
+4. ioctl
+5. basic Device Tree / platform driver
+6. optional GPIO interrupt handling
+
+預期 repository 結構：
+
+```text
+linux-kernel-driver-demo/
+├── README.md
+├── Makefile
+├── include/
+│   └── walker_ioctl.h
+├── driver/
+│   ├── hello_module.c
+│   ├── walker_chrdev.c
+│   └── walker_platform.c
+├── user/
+│   └── user_test.c
+├── dts/
+│   └── walker-gpio-demo-overlay.dts
+└── docs/
+    ├── architecture.md
+    ├── user_kernel_flow.md
+    └── test_log.md
+```
+
+### Phase 0：Hello Kernel Module
+
+先建立最小 kernel module。
+
+需要完成：
+
+- `driver/hello_module.c`
+- module load 時用 `pr_info` 印出訊息。
+- module remove 時用 `pr_info` 印出訊息。
+- 提供 `Makefile`。
+- `README.md` 要包含並解釋：
+  - `make`
+  - `sudo insmod hello_module.ko`
+  - `dmesg`
+  - `lsmod`
+  - `sudo rmmod hello_module`
+
+README 要說清楚：
+
+- kernel module 是什麼。
+- `insmod` 和 `rmmod` 做什麼。
+- `dmesg` 用來看什麼。
+
+### Phase 1：Character Device Driver
+
+建立 `/dev/walker_demo` 字元裝置。
+
+檔案：
+
+- `driver/walker_chrdev.c`
+
+需求：
+
+- 使用 `alloc_chrdev_region`。
+- 使用 `cdev_init` 和 `cdev_add`。
+- 使用 `class_create` 和 `device_create` 建立 `/dev/walker_demo`。
+- 實作 `file_operations`：
+  - `open`
+  - `release`
+  - `read`
+  - `write`
+- 維護一個 kernel internal buffer。
+- 使用者可以：
+  - `echo "hello" > /dev/walker_demo`
+  - `cat /dev/walker_demo`
+- 正確使用 `copy_to_user` 和 `copy_from_user`。
+- 加上合理錯誤處理。
+- 重要 kernel API 要有清楚註解。
+
+README 要說清楚：
+
+- major number
+- minor number
+- `cdev`
+- `file_operations`
+- `copy_to_user`
+- `copy_from_user`
+- 為什麼 user space 不能直接存取 kernel memory。
+
+Phase 0 和 Phase 1 做完後要先停下來，等 Raspberry Pi 實機測試結果，再繼續 Phase 2。
+
+### Phase 2：ioctl Support
+
+等 Phase 0 / Phase 1 測試通過後再做。
+
+共享標頭：
+
+- `include/walker_ioctl.h`
+
+需求：
+
+- 定義 ioctl commands：
+  - `WALKER_IOCTL_RESET`
+  - `WALKER_IOCTL_GET_BUFFER_SIZE`
+  - `WALKER_IOCTL_SET_MODE`
+- 使用 `_IO`、`_IOR`、`_IOW`。
+- 在 driver 實作 `unlocked_ioctl`。
+- `RESET` 清空 kernel buffer。
+- `GET_BUFFER_SIZE` 回傳目前 buffer size。
+- `SET_MODE` 儲存一個簡單整數 mode。
+- 建立 `user/user_test.c` 測試 open、write、read、RESET、GET_BUFFER_SIZE、SET_MODE。
+
+README 要說清楚：
+
+- ioctl 是什麼。
+- 什麼情境下 ioctl 比 read/write 適合。
+- user-space C program 如何和 kernel driver 溝通。
+
+### Phase 3：Platform Driver + Device Tree
+
+檔案：
+
+- `driver/walker_platform.c`
+- `dts/walker-gpio-demo-overlay.dts`
+
+需求：
+
+- 實作 `platform_driver`。
+- 加上 `of_device_id` table。
+- compatible string 使用 `"walker,gpio-demo"`。
+- 實作 `probe` 和 `remove`。
+- `probe` 印出 device matched。
+- `remove` 印出 device removed。
+- 提供 Raspberry Pi Device Tree overlay 範例。
+
+README 要說清楚：
+
+- Device Tree 是什麼。
+- compatible string 的用途。
+- `probe` 和 `remove` 做什麼。
+- 為什麼 BSP engineer 需要懂 Device Tree。
+
+### Phase 4：Optional GPIO Interrupt
+
+只有 Phase 0 到 Phase 3 都完成並測過後才做。
+
+需求：
+
+- 從 Device Tree 取得 GPIO。
+- 將 GPIO 轉成 IRQ。
+- 註冊 interrupt handler。
+- interrupt handler 只做最少工作。
+- 使用 workqueue 或 wait queue 做 deferred processing。
+- user space 可從 `/dev/walker_demo` 讀取簡單 event。
+
+README 要說清楚：
+
+- interrupt context
+- workqueue
+- wait queue
+- 為什麼 interrupt handler 不能做 heavy work，也不能 sleep。
+
+### Phase 5：Documentation for Resume and Interview
+
+建立文件：
+
+- `docs/architecture.md`
+- `docs/user_kernel_flow.md`
+- `docs/test_log.md`
+
+`architecture.md` 要說明：
+
+- project architecture
+- user-space app flow
+- kernel driver flow
+- read/write/ioctl flow
+- Device Tree binding flow
+
+`user_kernel_flow.md` 要說明：
+
+- user space vs kernel space
+- system call path 概念
+- read/write/ioctl 如何到達 `file_operations`
+- 為什麼需要 `copy_to_user` / `copy_from_user`
+
+`test_log.md` 要記錄範例命令與預期輸出：
+
+- `make`
+- `insmod`
+- `dmesg`
+- `lsmod`
+- `echo` / `cat /dev/walker_demo`
+- `user_test`
+- `rmmod`
+
+### README 必放內容
+
+README 第一段固定使用這個方向：
+
+> This project is a Linux kernel driver learning project implemented on Raspberry Pi. It demonstrates character device driver development, user-kernel communication through read/write/ioctl, basic platform driver binding with Device Tree, and optional GPIO interrupt handling. The goal is to build practical foundations for Junior BSP, BMC, Embedded Linux, and Platform Firmware roles.
+
+README 也要包含履歷 bullet points：
+
+- Linux Kernel Driver Demo on Raspberry Pi
+- Implemented a Linux character device driver with open/read/write/ioctl interfaces.
+- Developed a user-space C test program to communicate with the kernel module through `/dev` device node.
+- Practiced kernel module loading, `dmesg` debugging, and user-kernel space data transfer.
+- Extended the project with basic Device Tree and platform driver binding concepts.
+- Optionally implemented GPIO interrupt handling with deferred processing.
+
+### 支線 coding rules
+
+- Kernel code 使用 C，不用 C++。
+- 註解清楚，但不要過度包裝。
+- 每個 phase 都要能獨立工作，再進下一個 phase。
+- 正確性與清楚度優先於炫技。
+- 不假設特定 kernel version；遇到 API 版本差異要註明相容性考量。
+- 盡量避免 deprecated API。
+- README 要解釋重要命令與 kernel API。
+
+### 支線進度紀錄規則
+
+- 每次開始或結束這條支線的工作，都要更新本檔案的「學習紀錄」。
+- 紀錄要包含日期時間、做了什麼、測了什麼、目前卡點、下一步。
+- 如果使用者回報 Raspberry Pi 測試結果，也要整理進「學習紀錄」。
+- Phase 0 和 Phase 1 完成後必須等待實機測試結果，不要直接往 Phase 2 做。
+
 ## 4 週衝刺路線
 
 ### 第 1 週：C 基礎與位元操作
@@ -366,6 +620,76 @@ Linux kernel 加分任務：
 
 ## 學習紀錄
 
+### 2026-05-13 11:38 +08:00
+
+今天接著挑戰 `137 Single Number II`，練習出現三次元素下的位元統計法。
+
+完成項目：
+
+- 使用者重寫 `Medium/137-Single Number II/C.c` 的 `better_memory()`。
+- 檢查後確認核心解法正確：逐一統計 32 個 bit，對每個 bit 的出現次數取 mod 3，剩下的 bit 組回唯一值。
+- 討論重點：使用 `1U << i` 避免 signed shift 到最高位；`result` 用 unsigned 暫存後再轉回 `int`，可處理負數結果。
+
+目前狀態：
+
+- `better_memory()` 靜態檢查看起來正確。
+- 若要提交 LeetCode，需注意平台會呼叫 `singleNumber()`，穩定版邏輯應放在 `singleNumber()` 中。
+- 舊版 `singleNumber()` 使用 `calloc` 配置 32 個 counter，但目前沒有 `free`，若保留該版本要補釋放或改用固定陣列。
+
+### 2026-05-13 11:26 +08:00
+
+今天延續位元操作暖身，完成 `191 Number of 1 Bits`。
+
+完成項目：
+
+- 使用者新增 `Easy/191-Number of 1 Bits/C.c`。
+- 檢查修正版後確認使用 `n &= (n - 1)` 的 Brian Kernighan 解法正確。
+- 釐清觀念：`n - 1` 會把最低位的 `1` 變成 `0`，並把右側低位 `0` 變成 `1`；真正用來清掉最低位 `1` 的操作是 `n & (n - 1)`，不是 XOR。
+
+目前狀態：
+
+- `191 Number of 1 Bits` 已完成靜態檢查。
+- 尚未用本機編譯器驗證，因為目前開發環境剛重灌、編譯器尚未準備好。
+- 下一題建議接 `268 Missing Number`，可延續 XOR 與數學和兩種解法比較。
+
+### 2026-05-12 22:25 +08:00
+
+今晚先在 WSL 環境準備期間回到 LeetCode 主線，暖身位元操作題。
+
+完成項目：
+
+- 使用者完成 `Easy/136-Single Number/C.C`。
+- 檢查後確認核心 XOR 邏輯正確。
+- 將解法整理成更典型的 `result = 0` 累積 XOR 寫法。
+- 補上題頭筆記：核心想法、時間複雜度、空間複雜度、C 注意事項與面試說明。
+
+目前狀態：
+
+- `136 Single Number` 已整理完成。
+- Linux 支線今天仍維持只在聊天室渲染內容，不直接建立檔案；等 WSL 開發環境準備好再搬過去。
+- 下一題建議接 `191 Number of 1 Bits` 或 `268 Missing Number`，延續位元操作手感。
+
+### 2026-05-12 00:00 +08:00
+
+新增額外支線 `linux-kernel-driver-demo` 的專案規格。
+
+完成項目：
+
+- 將 Raspberry Pi Linux kernel / BSP demo 規劃整理進 `codex.md`。
+- 明確把這條支線定位成履歷與面試用作品集，不和 LeetCode 主線混在一起。
+- 記錄 Phase 0 到 Phase 5 的範圍與順序。
+- 明確規定先做 Phase 0 和 Phase 1，完成後等待 Raspberry Pi 實機測試結果，再繼續 Phase 2。
+- 加上支線進度紀錄規則：每次開始或結束支線工作，都要更新「學習紀錄」。
+
+目前狀態：
+
+- 尚未建立 `linux-kernel-driver-demo/` 目錄。
+- 下一步若使用者要求開始，就先產生 Phase 0 與 Phase 1：
+  - `driver/hello_module.c`
+  - `driver/walker_chrdev.c`
+  - `Makefile`
+  - `README.md`
+
 ### 2026-05-08 21:13 +08:00
 
 今晚主軸是把 `Common/Circular_Buffer.c` 從草稿整理成可面試討論的 ring buffer 範例。
@@ -411,6 +735,8 @@ Linux kernel 加分任務：
 - 使用繁體中文回覆，語氣稍微口語一點。
 - 不要一開始就大改既有解答；先確認使用者當下要的是補題、重構、註解整理，還是面試規劃。
 - 如果要整理舊題，優先從位元操作、指標/記憶體、linked list、circular buffer、LRU 開始。
+- 如果使用者提到 `linux-kernel-driver-demo`、kernel driver、BSP、Raspberry Pi driver，就視為額外支線；每次工作都要同步更新「學習紀錄」。
+- 支線目前原則是先做 Phase 0 和 Phase 1，完成後等使用者在 Raspberry Pi 上測試，再繼續 Phase 2，不要一次推進到 ioctl / Device Tree / GPIO interrupt。
 - 2026-05-07 接手觀察：
   - `Common/Circular_Buffer.c` 已在 2026-05-08 整理過，包含 capacity 檢查、NULL handling、read/write wrap-around 與 MSVC `/W4 /Zs` 檢查。
   - `Common/LRU_Cache.c` 目前像草稿，`range = 10001;` 少型別，若要整理 LRU，建議先改成可編譯版本再補面試註解。

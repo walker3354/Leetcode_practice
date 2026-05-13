@@ -13,21 +13,21 @@ int singleNumber(int* nums, int numsSize) {
     for (int i = 0; i < 32; i++) {
         result |= (bit_counter[i] << i);
     }
+    free(bit_counter);
     return (int)result;
 }
 
 int better_memory(int* nums, int numsSize) {
     unsigned int result = 0;
     for (int i = 0; i < 32; i++) {
-        unsigned int sum = 0;
         unsigned int bit_mask = (1U << i);
-
+        unsigned int sum = 0;
         for (int j = 0; j < numsSize; j++) {
-            sum += ((nums[j] & bit_mask) == 0 ? 0 : 1);
+            sum += ((nums[j] & bit_mask) != 0 ? 1 : 0);
+            sum %= 3;
         }
-        sum = sum % 3;
-        result |= (sum << i);
+        // result |= (sum<<i);
+        result |= (sum != 0 ? (1U << i) : 0);
     }
-
     return (int)result;
 }
