@@ -620,6 +620,77 @@ Linux kernel 加分任務：
 
 ## 學習紀錄
 
+### 2026-05-16 15:53 +08:00
+
+今天完成一組位元操作題：`371 Sum of Two Integers`、`190 Reverse Bits`、`338 Counting Bits`。
+
+完成項目：
+
+- 檢查 `Medium/371-Sum of Two Integers/C.c`：目前採逐 bit full-adder 寫法，邏輯方向正確。
+- 檢查 `Easy/190-Reverse Bits/C.c`：包含 32-bit 逐位反轉版本與 bit-swap 優化版本。
+- 檢查 `Easy/338-Counting Bits/C.c`：使用 `result[i & (i - 1)] + 1`，透過清除最低位的 `1` 來沿用已計算結果。
+
+目前狀態：
+
+- 三題都已完成靜態檢查。
+- 尚未編譯驗證。
+- `190` 的 `better_soulation()` 可再注意參數型別：若使用 bit-swap mask 做右移，建議實作時用 `uint32_t` 或 `unsigned int` 暫存，避免 signed right shift 的語意差異。
+- `338` 可再補 `calloc` 失敗檢查，並在失敗時設定 `*returnSize = 0`。
+- 使用者提醒：下次安排題目時要分配複習舊題與刷新題目的比例，不要只一路推新題。
+
+### 2026-05-16 15:36 +08:00
+
+今天回到位元操作主線，開始練習 `371 Sum of Two Integers`。
+
+完成項目：
+
+- 使用者更新 `Medium/371-Sum of Two Integers/C.c`。
+- 檢查目前版本：採用逐 bit full-adder 的想法，用 `a_bit ^ b_bit ^ carry` 產生結果 bit，並用三個 bit 中至少兩個為 1 來產生下一位 carry。
+- 討論 C 型別細節：`1U << i` 讓遮罩是 unsigned；`a & (1U << i)` 會把 `a` 轉成 unsigned 後運算；若參與 shift 的值是 unsigned，可避免 `1 << 31` 這類 signed shift 未定義行為。
+
+目前狀態：
+
+- `371` 目前靜態檢查邏輯方向正確。
+- 尚未編譯驗證。
+- 可再考慮把 `temp` 命名為 `carry`，讓面試說明更直覺。
+
+### 2026-05-15 18:19 +08:00
+
+今天接上 `linux-kernel-driver-demo` 支線，先把 Raspberry Pi 5 本機 kernel module 開發環境整理起來，並完成 Phase 0 hello kernel module 實機測試。
+
+完成項目：
+
+- Raspberry Pi 5 可從 Windows 端 ping 到，SSH 服務可連線；登入失敗主因是帳號大小寫錯誤，Windows SSH config 已從 `SubServer5` 修成 `subserver5`。
+- Raspberry Pi 端確認環境：
+  - kernel：`6.12.87+rpt-rpi-2712`
+  - board：`Raspberry Pi 5 Model B Rev 1.0`
+  - headers：`/lib/modules/6.12.87+rpt-rpi-2712/build -> /usr/src/linux-headers-6.12.87+rpt-rpi-2712`
+- 安裝 Raspberry Pi 本機開發工具時，`ltrace` 在目前套件來源中找不到，已改用不含 `ltrace` 的安裝清單；這不影響 kernel module 開發。
+- 建立並編譯 `~/workspace/linux-kernel-driver-demo` 的 Phase 0：
+  - `driver/hello_module.c`
+  - repo-root `Makefile`
+- 使用 Raspberry Pi 實機測試通過：
+  - `make`
+  - `sudo insmod driver/hello_module.ko`
+  - `lsmod | grep hello`
+  - `dmesg | tail -20`
+  - `sudo rmmod hello_module`
+  - `dmesg | tail -20`
+
+目前狀態：
+
+- `hello_module` 可成功載入與卸載。
+- `dmesg` 已看到：
+  - `hello_module: loaded on Raspberry Pi 5`
+  - `hello_module: unloaded`
+- Phase 0 完成；下一步進 Phase 1 character device driver，目標是建立 `/dev/walker_demo`，支援基本 `open` / `release` / `read` / `write`。
+
+注意事項：
+
+- Linux 帳號大小寫敏感，`SubServer5` 和 `subserver5` 是不同帳號。
+- `pr_info()` 可視為較現代且帶 log level 的 `printk(KERN_INFO ...)` 寫法。
+- `__init` / `__exit` 是 kernel section 標記；只在載入或卸載階段使用的函式適合加，會被正常執行階段呼叫的函式不要加。
+
 ### 2026-05-13 16:57 +08:00
 
 今天開始 `338 Counting Bits`，延續 `231 Power of Two` 的 `n & (n - 1)` 位元技巧。
@@ -783,6 +854,7 @@ Linux kernel 加分任務：
 - 使用繁體中文回覆，語氣稍微口語一點。
 - 不要一開始就大改既有解答；先確認使用者當下要的是補題、重構、註解整理，還是面試規劃。
 - 如果要整理舊題，優先從位元操作、指標/記憶體、linked list、circular buffer、LRU 開始。
+- 出題時要混合「複習舊題」和「刷新題目」；預設可用 2 題複習、1 題新題，或依使用者當天狀態調整。
 - 如果使用者提到 `linux-kernel-driver-demo`、kernel driver、BSP、Raspberry Pi driver，就視為額外支線；每次工作都要同步更新「學習紀錄」。
 - 支線目前原則是先做 Phase 0 和 Phase 1，完成後等使用者在 Raspberry Pi 上測試，再繼續 Phase 2，不要一次推進到 ioctl / Device Tree / GPIO interrupt。
 - 2026-05-07 接手觀察：

@@ -9,10 +9,11 @@ int* countBits(int n, int* returnSize) {
         return NULL;
     }
 
-    int* result = calloc(n + 1, sizeof(int));
     *returnSize = n + 1;
+    int* result = calloc(*returnSize, sizeof(int));
+    result[0] = 0;
 
-    for (int i = 1; i <= n; i++) {
+    for (int i = 1; i < *returnSize; i++) {
         result[i] = result[i & (i - 1)] + 1;
     }
     return result;
