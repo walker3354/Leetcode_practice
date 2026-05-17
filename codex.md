@@ -30,21 +30,21 @@
 - 目前分成 `Easy`、`Medium`、`Hard`、`Common`。
 - 主力語言是 C，少量 C++ 和 Python。
 - 目前檔案數大約是：
-  - `.c`: 54
+  - `.c`: 58
   - `.cpp`: 15
   - `.py`: 2
   - `.json`: 1
 - 各資料夾目前檔案數：
   - `.vscode`: 1
   - `Common`: 6
-  - `Easy`: 25
+  - `Easy`: 29
   - `Medium`: 39
   - `Hard`: 1
 - 目前 git 狀態：
   - branch: `master...origin/master`
-  - 2026-05-07 檢查時工作區乾淨，`master` 與 `origin/master` 同步。
-  - 最新提交：`b8ccc79 add codex to trace`。
-  - 本機 `rg` 目前執行會被權限擋住，掃 repo 可先用 PowerShell `Get-ChildItem`。
+  - 2026-05-17 檢查時，已新增 CAN encode/decode 與 linked list 面試題整理，準備提交並推送。
+  - 上一個已推提交：`2925377 Practice bit manipulation review set`。
+  - 本機 `rg` 目前可正常使用。
 
 ## 已觀察到的題型基礎
 
@@ -62,6 +62,7 @@
   - `141 Linked List Cycle`
   - `142 Linked List Cycle II`
   - `206 Reverse Linked List`
+  - `21 Merge Two Sorted Lists`
   - `19 Remove Nth Node From End of List`
 - Stack / Queue：
   - `20 Valid Parentheses`
@@ -72,6 +73,7 @@
   - `641 Design Circular Deque`
   - `Common/Circular_Buffer.c`
   - `Common/LRU_Cache.c`
+  - `Common/CAN_encoder.c`
 - 搜尋與陣列：
   - `704 Binary Search`
   - `33 Search in Rotated Sorted Array`
@@ -619,6 +621,80 @@ Linux kernel 加分任務：
 - 面試時能把 LeetCode 練習連回履歷中的嵌入式背景，而不是只說「我有刷題」。
 
 ## 學習紀錄
+
+### 2026-05-17 16:16 +08:00
+
+面試前最後整理：確認今日 MCU 面試複習檔案與 repo 狀態，準備推送到 GitHub。
+
+完成項目：
+
+- 盤點目前 repo 檔案統計：
+  - `.c`: 58
+  - `.cpp`: 15
+  - `.py`: 2
+  - `.md`: 1
+  - `.json`: 1
+- 盤點資料夾檔案數：
+  - `.vscode`: 1
+  - `Common`: 6
+  - `Easy`: 29
+  - `Medium`: 39
+  - `Hard`: 1
+- 確認本次變更包含：
+  - 新增 `Common/CAN_encoder.c`
+  - 更新 `Easy/206-Reverse Linked List/C.c`
+  - 更新 `Easy/141-Linked List Cycle/C.c`
+  - 新增 `Easy/21-Merge Two Sorted Lists/C.c`
+  - 刪除 `Common/print_pyramid.c`
+  - 刪除舊路徑 `Easy/20-Merge Two Sorted Lists/C++.cpp`
+- 使用者確認刪除是有意整理，`Merge Two Sorted Lists` 改放到正確的 LeetCode 21 路徑。
+
+目前狀態：
+
+- 今天主軸是 MCU 面試前複習，重點為 CAN encode/decode 與 linked list 三題。
+- 尚未本機編譯驗證，主要完成靜態檢查與面試說明整理。
+- 提交前仍需注意 CAN decode 的 cast 位置可再寫得更乾淨，但目前不直接改使用者程式。
+
+### 2026-05-17 16:06 +08:00
+
+明天 MCU 面試前，完成 CAN encode/decode 與 linked list 三題複習。
+
+完成項目：
+
+- 使用者完成 `Common/CAN_encoder.c`，練習 8-byte CAN payload 的 little-endian encode/decode。
+- 使用者完成 linked list 三題：
+  - `Easy/206-Reverse Linked List/C.c`
+  - `Easy/141-Linked List Cycle/C.c`
+  - `Easy/21-Merge Two Sorted Lists/C.c`
+- 檢查 `206 Reverse Linked List`：使用 iterative 三指標思路，先保存 next，再反轉 `next` 指標，最後回傳新 head。
+- 檢查 `141 Linked List Cycle`：使用 Floyd slow/fast pointer，透過節點位址相遇判斷是否有環。
+- 檢查 `21 Merge Two Sorted Lists`：使用 dummy head 串接原節點，不額外複製 list 節點。
+
+目前狀態：
+
+- 四個檔案皆已完成靜態檢查。
+- CAN decode 建議把 cast 寫成 `((uint16_t)data[1] << 8)` 與 `((uint16_t)data[3] << 8)`，語意更清楚。
+- CAN signed angle decode 可用 `(int16_t)raw_angle` 表示把 raw 16-bit pattern 解回 signed value。
+- `Merge Two Sorted Lists` 目前用 `malloc` 配 dummy head 並在回傳前 `free`，邏輯可行；面試時更推薦 stack dummy，避免不必要配置與 `malloc` 失敗處理。
+- `git status` 顯示 `Common/print_pyramid.c` 與 `Easy/20-Merge Two Sorted Lists/C++.cpp` 被刪除，提交前要確認是否為使用者有意整理路徑。
+
+### 2026-05-17 15:14 +08:00
+
+明天 MCU 面試前，今天改練 CAN encode / decode 與 linked list 面試題。
+
+完成項目：
+
+- 使用者新增 `Common/CAN_encoder.c`，內容包含 `encode_can_payload()` 與 `decode_can_payload()`。
+- 檢查目前 CAN 版本：固定 8-byte payload，`rpm` 使用 `uint16_t`，`angle` 使用 `int16_t`，`status` 使用 `uint8_t`，byte 5 到 byte 7 清為 0。
+- 討論 CAN payload 的 endianness：這裡指的是多 byte signal 的 byte order，不是 byte 內部 bit order。
+- 討論函式參數：`uint8_t data[8]` 在 C 函式參數中會退化成 `uint8_t *data`，`[8]` 主要是表達預期至少有 8 bytes，不會真的由編譯器保證長度。
+
+目前狀態：
+
+- CAN encode/decode 靜態檢查大方向正確。
+- 建議修正 signed `angle` 的 encode：先轉成 `uint16_t raw_angle = (uint16_t)angle;` 再 shift，避免 signed negative right shift 的 implementation-defined 行為。
+- 建議修正 decode cast：使用 `((uint16_t)data[1] << 8)`，把 byte 先轉寬再左移，語意更乾淨。
+- `git status` 顯示 `Common/print_pyramid.c` 被刪除；尚未確認是否為使用者有意刪除，後續提交前要確認。
 
 ### 2026-05-16 15:53 +08:00
 
