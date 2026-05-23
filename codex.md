@@ -622,6 +622,46 @@ Linux kernel 加分任務：
 
 ## 學習紀錄
 
+### 2026-05-22 21:33 +08:00
+
+今天確認 Codex 已可直接透過 `ssh rpi` 連到 Raspberry Pi 5，並在 Pi 上完成 `linux-kernel-driver-demo` Phase 1 character device driver 的實機 smoke test。
+
+完成項目：
+
+- 透過 SSH 確認 Raspberry Pi 端狀態：
+  - user：`subserver5`
+  - host：`SubServer5`
+  - OS：`Debian GNU/Linux 12 (bookworm)`
+  - architecture：`arm64`
+  - kernel：`6.12.87+rpt-rpi-2712`
+  - board：`Raspberry Pi 5 Model B Rev 1.0`
+  - headers：`/lib/modules/6.12.87+rpt-rpi-2712/build -> /usr/src/linux-headers-6.12.87+rpt-rpi-2712`
+- 檢查 Pi 上專案檔案：
+  - `~/workspace/linux-kernel-driver-demo/Makefile`
+  - `~/workspace/linux-kernel-driver-demo/driver/hello_module.c`
+  - `~/workspace/linux-kernel-driver-demo/driver/walker_chrdev.c`
+- 在 Pi 上執行 `make` 成功，產生：
+  - `driver/hello_module.ko`
+  - `driver/walker_chrdev.ko`
+- 實機載入並測試 `walker_chrdev` 成功：
+  - `sudo insmod driver/walker_chrdev.ko`
+  - `/dev/walker_demo` 成功建立，權限顯示為 `crw------- root root`
+  - 使用 `echo "hello from codex ssh" | sudo tee /dev/walker_demo` 寫入成功
+  - 使用 `sudo cat /dev/walker_demo` 讀回 `hello from codex ssh`
+  - `sudo rmmod walker_chrdev` 卸載成功
+
+目前狀態：
+
+- Phase 0 hello kernel module 已完成並通過實機測試。
+- Phase 1 character device driver 已完成基本 `open` / `release` / `read` / `write` smoke test。
+- `dmesg` 已看到 `walker_chrdev: created /dev/walker_demo`、`wrote 21 bytes`、`removed /dev/walker_demo`。
+- 依照支線規則，Phase 0 / Phase 1 已有 Raspberry Pi 實機測試結果；下一步可以先補 README 與 API 解釋，或在確認學習節奏後再進 Phase 2 ioctl。
+
+注意事項：
+
+- `/dev/walker_demo` 目前由 `device_create()` 建立後預設是 `root:root`、`crw-------`，所以一般使用者需要 `sudo` 才能讀寫。
+- 目前 smoke test 只驗證單一 buffer 的基本讀寫；還沒處理多 reader/writer、權限規則、udev rule、partial write policy 或 ioctl。
+
 ### 2026-05-17 16:16 +08:00
 
 面試前最後整理：確認今日 MCU 面試複習檔案與 repo 狀態，準備推送到 GitHub。
