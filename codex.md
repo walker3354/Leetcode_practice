@@ -622,6 +622,80 @@ Linux kernel 加分任務：
 
 ## 學習紀錄
 
+### 2026-05-24 18:32 +08:00
+
+今天完成一組「2 題複習 + 1 題新題」並整理成可提交版本。
+
+完成項目：
+
+- 修正 `Medium/209-Minimum Size Subarray Sum/C.c`：移除 `fmin()`，改用純整數比較更新最短長度。
+- 修正 `Medium/3-Longest Substring Without Repeating Characters/C.c`：
+  - 先檢查 `s == NULL` 再呼叫 `strlen()`。
+  - 將字元表改成 256 格並用 `unsigned char` 當索引。
+  - 加上 `malloc` 失敗檢查。
+  - 移除 `fmax()`，改用整數比較。
+- 修正 `Easy/125-Valid Palindrome/C.c`：
+  - 保留 `<stdlib.h>` 讓 `NULL` 來源明確。
+  - 新增 ASCII helper：`is_ascii_alnum()` 與 `to_ascii_lower()`。
+  - 不再修改輸入字串，只在比較時轉成小寫。
+
+目前狀態：
+
+- 今日題目已整理完成，準備提交推送。
+- 工作區同時有 `Medium/3-Sum/C.cpp` -> `Medium/3-Sum/C++.cpp` 的檔名整理，提交前需一起確認。
+
+### 2026-05-24 18:30 +08:00
+
+今天第三題完成新題 `125 Valid Palindrome`，練習 C 字元處理與雙指標。
+
+完成項目：
+
+- 使用者新增 `Easy/125-Valid Palindrome/C.c`。
+- 檢查目前版本：使用 left/right 雙指標，跳過非英數字元，並手刻 ASCII 大小寫處理。
+- 今天題目配比完成：複習 `209`、複習 `3`、新題 `125`。
+
+目前狀態：
+
+- `125` 主要測資方向可行。
+- 建議避免直接修改輸入字串；目前版本遇到大寫字母會用 `s[left] += 32` 或 `s[right] += 32` 直接改原字串，面試寫法建議改成 helper 回傳比較用的小寫字元。
+- 可把「是否英數」與「轉小寫」拆成兩個 helper，邏輯會比巢狀 while 更好講。
+- 工作區仍顯示 `Medium/3-Sum/C.cpp` 被刪除且有未追蹤 `Medium/3-Sum/C++.cpp`，看起來像檔名整理；提交前需確認是否為使用者有意重新命名。
+
+### 2026-05-24 17:47 +08:00
+
+今天第二題複習 `3 Longest Substring Without Repeating Characters`。
+
+完成項目：
+
+- 使用者更新 `Medium/3-Longest Substring Without Repeating Characters/C.c`。
+- 檢查目前版本：採用 sliding window 與 `record_map` 記錄字元最後出現位置，方向正確。
+- 目前工作區也顯示 `Medium/3-Sum/C.cpp` 被刪除，且有未追蹤的 `Medium/3-Sum/C++.cpp`，看起來像檔名整理；提交前要確認是否為使用者有意重新命名。
+
+目前狀態：
+
+- `3` 的演算法方向正確，但 C 細節需修正後再視為完成：
+  - `strlen(s)` 在 `s == NULL` 檢查前呼叫，若傳入 NULL 會崩潰。
+  - `memset(record_map, -1, sizeof(int))` 只初始化一個 int，應初始化整個 128 個 int。
+  - `malloc` 後需要檢查是否為 NULL。
+  - `fmax()` 是浮點函式，整數長度比較建議改用三元運算或整數 helper。
+  - 若假設 ASCII，可使用 128；更保守可用 256 並以 `unsigned char` 當索引。
+
+### 2026-05-24 16:08 +08:00
+
+今天回到 LeetCode 主線，先複習 `209 Minimum Size Subarray Sum`。
+
+完成項目：
+
+- 使用者更新 `Medium/209-Minimum Size Subarray Sum/C.c`。
+- 檢查後確認 sliding window 邏輯正確：右指標擴張累加，當 sum 達標時用左指標收縮，並更新最小長度。
+- 新寫法刪除了前置 `numsSize <= 0` 判斷；目前仍可正確處理 `numsSize == 0`，因為迴圈不會進入，最後回傳 0。
+
+目前狀態：
+
+- `209` 靜態檢查通過。
+- 建議避免在整數比較中使用 `fmin()`，因為它是浮點函式、回傳 `double`，純 C 面試寫法可改成三元運算或整數 helper。
+- 下一題仍建議照配比進行：複習 `3 Longest Substring Without Repeating Characters`，再做新題 `125 Valid Palindrome`。
+
 ### 2026-05-22 21:33 +08:00
 
 今天確認 Codex 已可直接透過 `ssh rpi` 連到 Raspberry Pi 5，並在 Pi 上完成 `linux-kernel-driver-demo` Phase 1 character device driver 的實機 smoke test。

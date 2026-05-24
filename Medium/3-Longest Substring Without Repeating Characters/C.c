@@ -1,25 +1,31 @@
 #include <stdlib.h>
 #include <string.h>
 
-int max_num(int a, int b) {
-    if (a >= b) return a;
-    return b;
-}
-
 int lengthOfLongestSubstring(char* s) {
-    int char_map[128];
-    int begin = 0, result = 0;
+    if (s == NULL) return 0;
+
     int s_len = strlen(s);
-    memset(char_map, -1, sizeof(char_map));
+    if (s_len == 0) return 0;
+    if (s_len == 1) return 1;
+
+    int result = 0;
+    int begin = 0;
+    int* record_map = malloc(256 * sizeof(int));
+    if (record_map == NULL) return 0;
+
+    memset(record_map, -1, sizeof(int) * 256);
 
     for (int i = 0; i < s_len; i++) {
-        int last_appear = char_map[(int)s[i]];
-        if (last_appear >= begin) {
-            result = max_num(result, (i - begin));
-            begin = last_appear + 1;
+        unsigned char c = (unsigned char)s[i];
+        if (record_map[c] < begin) {
+            int len = (i - begin) + 1;
+            result = result > len ? result : len;
+        } else {
+            begin = record_map[c] + 1;
         }
-        char_map[(int)s[i]] = i;
+        record_map[c] = i;
     }
-    result = max_num(result, (s_len - begin));
+
+    free(record_map);
     return result;
 }
