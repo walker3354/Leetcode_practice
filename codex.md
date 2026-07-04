@@ -622,6 +622,190 @@ Linux kernel 加分任務：
 
 ## 學習紀錄
 
+### 2026-06-06 22:08 +08:00
+
+今天將 `linux-kernel-driver-demo` Phase 2 ioctl 整理版搬進獨立 repo `~/workspace/rpi5-kernel-driver-lab`，並補齊展示用文件與測試紀錄。
+
+完成項目：
+
+- 從練習專案搬移整理版檔案到乾淨 repo：
+  - `include/walker_ioctl.h`
+  - `driver/walker_chrdev_ioctl.c`
+  - `user/walker_ioctl_test.c`
+- 更新乾淨 repo：
+  - `Makefile`
+  - `user/Makefile`
+  - `.gitignore`
+  - `README.md`
+  - `codex.md`
+- 新增文件：
+  - `docs/test_log.md`
+  - `docs/user_kernel_flow.md`
+- `.gitignore` 已確認會忽略：
+  - `.o`
+  - `.ko`
+  - `.mod.c`
+  - `Module.symvers`
+  - `modules.order`
+  - `user/walker_rw_test`
+  - `user/walker_ioctl_test`
+  - `*practice*` 檔案
+
+實測結果：
+
+- 在 `~/workspace/rpi5-kernel-driver-lab` 執行：
+  - `make`
+  - `make user`
+  - `sudo insmod driver/walker_chrdev_ioctl.ko`
+  - `sudo ./user/walker_ioctl_test /dev/walker_ioctl 'repo ioctl smoke'`
+  - `sudo rmmod walker_chrdev_ioctl`
+- user program 成功輸出：
+  - `device          : /dev/walker_ioctl`
+  - `wrote           : 16 bytes`
+  - `size via ioctl  : 16 bytes`
+  - `read            : 16 bytes`
+  - `data            : repo ioctl smoke`
+  - `mode via ioctl  : 7`
+  - `reset via ioctl : ok`
+- `dmesg` 已看到 `walker_ioctl: reset buffer` 與 `walker_ioctl: removed /dev/walker_ioctl`。
+
+Git 狀態：
+
+- 乾淨 repo 已提交：
+  - `296f7de Add ioctl driver phase`
+  - 前一個 commit：`986f91f Initial Raspberry Pi kernel driver lab`
+- 目前沒有未提交原始檔，只有被 `.gitignore` 忽略的 build outputs。
+
+關於 `docs/test_log.md`：
+
+- 這份文件就是測試手冊與驗證紀錄，應包含如何 build、如何 `insmod` 掛 module、如何檢查 `/dev` 節點、如何跑 user-space test、如何看 `dmesg`、如何 `rmmod` 卸載，以及代表性輸出。
+
+### 2026-06-06 21:52 +08:00
+
+今天檢查使用者重寫的 `linux-kernel-driver-demo` Phase 2 ioctl practice 版本，並完成修正後的 Raspberry Pi 實機測試。
+
+完成項目：
+
+- 使用者新增 / 修改 ioctl practice 相關檔案：
+  - `include/walker_ioctl_practice.h`
+  - `driver/walker_chrdev_ioctl_practice.c`
+- `Makefile` 已加入：
+  - `obj-m += driver/walker_chrdev_ioctl_practice.o`
+- 重新編譯成功：
+  - `make`
+  - `make -C user`
+- 載入並測試 practice driver：
+  - `sudo insmod driver/walker_chrdev_ioctl_practice.ko`
+  - `sudo ./user/walker_ioctl_test /dev/walker_ioctl_practice 'fixed ioctl practice'`
+  - `sudo rmmod walker_chrdev_ioctl_practice`
+
+修正重點：
+
+- 初版 `WALKER_IOCTL_RESET` case 少了 `return 0;`，導致 switch fall-through 到 `WALKER_IOCTL_GET_BUFFER_SIZE`。
+- fall-through 造成 `RESET` 後又執行 `GET_BUFFER_SIZE`，實測時 user-space 的 `mode` 被污染成 `0`。
+- 修正後 `RESET` 不再掉進 `GET_BUFFER_SIZE`，user-space 輸出中的 `mode via ioctl` 正常維持 `7`。
+
+實測結果：
+
+- user program 輸出：
+  - `device          : /dev/walker_ioctl_practice`
+  - `wrote           : 20 bytes`
+  - `size via ioctl  : 20 bytes`
+  - `read            : 20 bytes`
+  - `data            : fixed ioctl practice`
+  - `mode via ioctl  : 7`
+  - `reset via ioctl : ok`
+- `dmesg` 已看到：
+  - `walker_ioctl: created /dev/walker_ioctl_practice`
+  - `walker_ioctl: wrote 20 bytes`
+  - `walker_ioctl: get buffer size=20`
+  - `walker_ioctl: set mode=7`
+  - `walker_ioctl: removed /dev/walker_ioctl_practice`
+
+目前狀態：
+
+- Phase 2 ioctl practice driver 已可編譯、載入、測試與卸載。
+- 使用者同步補強了 `file` 的 `ppos` 觀念與 ioctl 基礎知識。
+- 下一步可以整理 Phase 2 README / test log，或開始把整理版 ioctl 功能移植到獨立 git repo `~/workspace/rpi5-kernel-driver-lab`。
+
+### 2026-05-29 16:20 +08:00
+
+今天開始 `linux-kernel-driver-demo` Phase 2 ioctl 參考版，先由 Codex 寫一份可跑範例，供使用者閱讀後再自行重寫練習版。
+
+完成項目：
+
+- 在 Raspberry Pi 的 `~/workspace/linux-kernel-driver-demo` 新增：
+  - `include/walker_ioctl.h`
+  - `driver/walker_chrdev_ioctl.c`
+  - `user/walker_ioctl_test.c`
+- 更新 Raspberry Pi 專案的 `Makefile`：
+  - 新增 `obj-m += driver/walker_chrdev_ioctl.o`
+- 更新 `user/Makefile`：
+  - 新增 `walker_ioctl_test`
+- ioctl commands：
+  - `WALKER_IOCTL_RESET`
+  - `WALKER_IOCTL_GET_BUFFER_SIZE`
+  - `WALKER_IOCTL_SET_MODE`
+- driver 新增 `.unlocked_ioctl = walker_ioctl`，並用 `copy_to_user()` / `copy_from_user()` 傳遞 ioctl 參數。
+
+實測結果：
+
+- 在 Raspberry Pi 上執行 `make` 與 `make -C user` 成功。
+- 載入 `driver/walker_chrdev_ioctl.ko` 後成功建立 `/dev/walker_ioctl`。
+- 執行 `sudo ./user/walker_ioctl_test` 成功輸出：
+  - `wrote           : 18 bytes`
+  - `size via ioctl  : 18 bytes`
+  - `read            : 18 bytes`
+  - `data            : hello ioctl driver`
+  - `mode via ioctl  : 7`
+  - `reset via ioctl : ok`
+- `dmesg` 已看到：
+  - `walker_ioctl: created /dev/walker_ioctl`
+  - `walker_ioctl: get buffer size=18`
+  - `walker_ioctl: set mode=7`
+  - `walker_ioctl: reset buffer`
+  - `walker_ioctl: removed /dev/walker_ioctl`
+
+目前狀態：
+
+- Phase 2 參考版已可編譯與實機測試。
+- 下一步建議使用者閱讀 `walker_ioctl.h`、`walker_chrdev_ioctl.c`、`walker_ioctl_test.c` 後，另外重寫一份 practice 版本。
+
+### 2026-05-26 22:07 +08:00
+
+今天在 Raspberry Pi 5 的 `linux-kernel-driver-demo` 中新增 user-space read/write demo，讓 Phase 1 character device driver 不只用 `echo` / `cat` 測，也能用一般 C 程式透過 system call 操作 `/dev/walker_practice`。
+
+完成項目：
+
+- 在 Pi 上新增：
+  - `~/workspace/linux-kernel-driver-demo/user/walker_rw_test.c`
+  - `~/workspace/linux-kernel-driver-demo/user/Makefile`
+- `walker_rw_test.c` 會執行：
+  - `open("/dev/walker_practice", O_RDWR)`
+  - `write()` 寫入 `hello from user-space test`
+  - `read()` 從同一個 device fd 讀回資料
+  - `close()`
+- 在 Pi 上執行 `make -C user` 成功，產生 `user/walker_rw_test`。
+- 載入 `driver/walker_chrdev_practice.ko` 後，執行 `sudo ./user/walker_rw_test` 成功。
+
+實測結果：
+
+- user program 輸出：
+  - `device: /dev/walker_practice`
+  - `wrote : 26 bytes`
+  - `read  : 26 bytes`
+  - `data  : hello from user-space test`
+- `dmesg` 已看到：
+  - `walker_practice: open`
+  - `walker_practice: wrote 26 bytes`
+  - `walker_practice: release`
+  - `walker_chrdev: removed /dev/walker_practice`
+
+目前狀態：
+
+- Phase 1 已從 shell 測試推進到 user-space C 測試。
+- 下一步若繼續往下，適合整理 README / test log，然後進 Phase 2 ioctl。
+
 ### 2026-05-24 18:32 +08:00
 
 今天完成一組「2 題複習 + 1 題新題」並整理成可提交版本。
