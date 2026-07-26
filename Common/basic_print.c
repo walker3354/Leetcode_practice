@@ -70,6 +70,18 @@ int b = SQUARE(a + 1);
 
 printf("%d\n", b); // 3+1*3+1 =>7，最好修成SQUARE(x) (x)* (x)
 
-//Q10
+// Q10
 
-//不是thread safe，假設今天我是一個while(temp != 0)，然後我可能有一個外部的ISR向是timer interrupt，我今天在ISR裡面把temp++，但是編譯器可能看到temp在迴圈裏面沒有修改值，這樣的話它可能會很貼心地去幫我們省力，不會每次都去記憶體撈資料
+// 不是thread safe，假設今天我是一個while(temp !=
+// 0)，然後我可能有一個外部的ISR向是timer
+// interrupt，我今天在ISR裡面把temp++，但是編譯器可能看到temp在迴圈裏面沒有修改值，這樣的話它可能會很貼心地去幫我們省力，不會每次都去記憶體撈資料
+
+int count_set_bits(unsigned int value) {
+    if (value == 0) return 0;
+
+    int counter = 1;
+    while ((value &= (value - 1)) > 0) {
+        counter++;
+    }
+    return counter;
+}
